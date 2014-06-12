@@ -73,6 +73,6 @@ int read_float(char *line, int *char_counter, float *float_ptr)
 	}
 
 	*char_counter = ptr - line - 1; // Set char_counter to next statement
-
+//	printf("find float ,end at %c!!\n",line[*char_counter]);
 	return(true);
 }

@@ -18,8 +18,10 @@ int main(void)
 
 	while(gets(cmd)!=NULL)
 	{
-		gc_execute_line(cmd);
-	//printf("%c motion= %d group=%d X=%f Y=%f Z=%f F=%d\n",gc.cmd_type,gc.motion_mode,gc.group_num,gc.p.x,gc.p.y,gc.p.z,gc.inverse_feed_rate_mode);
+	//	printf("str=%s\n",cmd);
+		int rt=	gc_execute_line(cmd);
+		if(rt==0)	printf("%c motion= %d group=%d X=%f Y=%f Z=%f F=%d prog_status=%d\n",gc.cmd_type,gc.motion_mode,gc.group_num,gc.p.x,gc.p.y,gc.p.z,gc.inverse_feed_rate_mode,gc.program_st);
+		else printf("rt=%d\n",gc.status_code);
 	}
 
 	//fclose(fr);

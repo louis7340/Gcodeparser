@@ -16,9 +16,6 @@ Gcmd_struc gc;
 
 int  gc_execute_line(char *line)
 {
-	//if not a useful command
-	if(!(line[0]>='A' && line[0]<='Z')) return 0;
-	
 	char cmd_type;
 	char letter;
 	float f_value;
@@ -33,7 +30,8 @@ int  gc_execute_line(char *line)
 	/*Parse 1: parse commands and set all modes.
 	 check group violation?
 	 */
-
+	gc.status_code = STATUS_OK;
+	gc.cmd_type = '?';//None cmd
 	while(parse_word(&cmd_type,&f_value,line,&line_cnt))
 	{
 		int_value=trunc(f_value);
@@ -42,8 +40,8 @@ int  gc_execute_line(char *line)
 		{
 			case 'G':
 				gc.cmd_type='G';
-				printf("G command");
-				printf(" value=%d\n",int_value);
+			//	printf("G command");
+			//	printf(" value=%d status code=%d\n",int_value,gc.status_code);
 				//set modal group
 				//什麼樣的int_value不重要？重要的是移動模式?
 				switch(int_value)
@@ -83,8 +81,8 @@ int  gc_execute_line(char *line)
 				break;
 			case 'M':
 				gc.cmd_type='M';
-				printf("M command");
-				printf(" value=%d\n",int_value);
+			//	printf("M command");
+			//	printf(" value=%d status code=%d\n",int_value,gc.status_code);
 				switch(int_value)
 				{
 					case 0: gc.program_st=PROGRAM_FLOW_PAUSED; break;
@@ -96,11 +94,12 @@ int  gc_execute_line(char *line)
 					default: FILL_ST(STATUS_UNSUPPORTED_STATEMENT);
 					break;
 				}
-	//		default: FILL_ST(UNEXPECTED_COMMAND_LETTER);
 		}
 
 		//any error,all status code>0 is an error
 		if(gc.status_code) return gc.status_code;
+
+		//printf("test 1 pass!! command= %c value=%d\n ",gc.cmd_type,int_value);
 		/*
 		   set default value for parameters
 		   */
@@ -157,13 +156,17 @@ int  gc_execute_line(char *line)
 					break;
 				default:FILL_ST(STATUS_UNSUPPORTED_STATEMENT);
 			}
+			if(gc.status_code) return gc.status_code;
+	//		printf("letter= %c  ,   value=%2.3f ~ ",letter,f_value);
 		}
-		
-		//should put in the while loop
+	//	printf("status=%d , test2 over! \n",gc.status_code);
 		if(gc.status_code) return gc.status_code;
+		//should put in the while loop
 	}
+	//if initial letter is not valid
+	if(gc.status_code) return gc.status_code;
 
-	return 1;
+	return 0;
 }
 
 
@@ -172,18 +175,42 @@ int  gc_execute_line(char *line)
 //Return 1 if there exist an useful word otherwise return 0.
 int  parse_word(char *letter ,float *ptr_float,char *line, int *line_cnt)
 {
-	//no more word
-	if(line[*line_cnt]==0) return 0;	
+
+	if(line[*line_cnt]==' ') (*line_cnt)++;
 	
+	//read  the comment
+	if( line[*line_cnt]=='(')
+	{
+		for(;line[*line_cnt]!=')';(*line_cnt)++)
+			;
+		(*line_cnt)++;
+		if(line[*line_cnt]==' ') (*line_cnt)++;
+	//	printf("read comment until %c!\n",line[*line_cnt]);
+	}
+
+	//no more word
+	if(line[*line_cnt]=='\0')
+	{
+//		printf("over\n");
+		return 0;	
+	}
+
+	//read float to the space , so foward one step
+	if(line[*line_cnt]==' ') (*line_cnt)++;
+
 	*letter=line[*line_cnt];
-	//not an useful command
+	
+
+	//額外處理括號
+	//parsing until no command letter, ex: '('
 	if( (*letter<'A') || (*letter>'Z') )
 	{
-		printf("no! %c \n",*letter);
 		FILL_ST(STATUS_UNEXPECTED_COMMAND_LETTER);
 		return 0;
 	}
-	(*line_cnt)++;
+	(*line_cnt)++;//maybe on the space
+	
+	if(line[*line_cnt]==' ') (*line_cnt)++;
 	
 	//Read floatnumber
 	if(!read_float(line,line_cnt,ptr_float))
